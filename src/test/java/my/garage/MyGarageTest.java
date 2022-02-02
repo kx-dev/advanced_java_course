@@ -1,7 +1,9 @@
 package my.garage;
 
 import org.junit.Test;
+
 import java.util.*;
+
 import static org.junit.Assert.*;
 
 public class MyGarageTest {
@@ -27,36 +29,43 @@ public class MyGarageTest {
 
     @Test
     public void allCarsUniqueOwners() throws Exception {
-        assertEquals(new HashSet<>(Arrays.asList(alex, dima, oleg)) , new HashSet<>(garage.allCarsUniqueOwners()));
+        assertEquals(new HashSet<>(Arrays.asList(alex, dima, oleg)),
+                new HashSet<>(garage.allCarsUniqueOwners()));
     }
 
     @Test
     public void topThreeCarsByMaxVelocity() throws Exception {
-        assertEquals(new TreeSet<>(Arrays.asList(car2, car4, car1)) , new TreeSet<>(garage.topThreeCarsByMaxVelocity()));
+        assertEquals(new TreeSet<>(Arrays.asList(car2, car4, car1)),
+                new TreeSet<>(garage.topThreeCarsByMaxVelocity()));
     }
 
     @Test
     public void allCarsOfBrand() throws Exception {
-        assertEquals(new TreeSet<>(Arrays.asList(car5)) , new TreeSet<>(garage.allCarsOfBrand("Lada")));
-        assertEquals(new TreeSet<>(Arrays.asList(car2, car1)) , new TreeSet<>(garage.allCarsOfBrand("BMW")));
+        assertEquals(new TreeSet<>(Arrays.asList(car5)),
+                new TreeSet<>(garage.allCarsOfBrand("Lada")));
+        assertEquals(new TreeSet<>(Arrays.asList(car2, car1)),
+                new TreeSet<>(garage.allCarsOfBrand("BMW")));
     }
 
     @Test
     public void carsWithPowerMoreThan() throws Exception {
-        assertEquals(new TreeSet<>(Arrays.asList(car4, car1, car2)) , new TreeSet<>(garage.carsWithPowerMoreThan(200)));
+        assertEquals(new TreeSet<>(Arrays.asList(car4, car1, car2)),
+                new TreeSet<>(garage.carsWithPowerMoreThan(200)));
     }
 
     @Test
     public void allCarsOfOwner() throws Exception {
-        assertEquals(new TreeSet<>(Arrays.asList(car4, car1)) , new TreeSet<>(garage.allCarsOfOwner(dima)));
-        assertEquals(new TreeSet<>(Arrays.asList(car2)) , new TreeSet<>(garage.allCarsOfOwner(alex)));
+        assertEquals(new TreeSet<>(Arrays.asList(car4, car1)),
+                new TreeSet<>(garage.allCarsOfOwner(dima)));
+        assertEquals(new TreeSet<>(Arrays.asList(car2)),
+                new TreeSet<>(garage.allCarsOfOwner(alex)));
     }
 
     @Test
     public void meanOwnersAgeOfCarBrand() throws Exception {
         assertEquals(27, garage.meanOwnersAgeOfCarBrand("BMW"));
         assertEquals(58, garage.meanOwnersAgeOfCarBrand("Lada"));
-        }
+    }
 
     @Test
     public void meanCarNumberForEachOwner() throws Exception {
@@ -75,13 +84,15 @@ public class MyGarageTest {
         int carId = 10;
         Car addedCar = new Car(carId, "Lada", "Malina", 130, 120, 1);
         garage.addCar(addedCar, dima);
-        assertEquals(new TreeSet<>(Arrays.asList(addedCar, car1, car4)) , new TreeSet<>(garage.allCarsOfOwner(dima)));
+        assertEquals(new TreeSet<>(Arrays.asList(addedCar, car1, car4)),
+                new TreeSet<>(garage.allCarsOfOwner(dima)));
         garage.removeCar(carId);
     }
 
     @Test
     public void getAllCars() throws Exception {
-        assertEquals(new TreeSet<>(Arrays.asList(car5, car4, car3, car1, car2)) , new TreeSet<>(garage.getAllCars()));
+        assertEquals(new TreeSet<>(Arrays.asList(car5, car4, car3, car1, car2)),
+                new TreeSet<>(garage.getAllCars()));
     }
 
 }

@@ -2,34 +2,22 @@ package my.garage;
 
 import java.util.*;
 
+import static java.util.Comparator.comparingInt;
+
 public class MyGarage implements Garage {
-
-    private class ComparatorByPower implements Comparator<Car> {
-        @Override
-        public int compare(Car car1, Car car2) {
-            // сравниваем сначала по Power, потом по CarId, т.е. car1 и car2 всегда будут различаться
-            return Comparator.comparingInt(Car::getPower).thenComparingLong(Car::getCarId).compare(car1, car2);
-        }
-    }
-    private class ComparatorByVelocity implements Comparator<Car> {
-        @Override
-        public int compare(Car car1, Car car2) {
-            // сравниваем сначала по MaxVelocity, потом по CarId, т.е. car1 и car2 всегда будут различаться
-            return Comparator.comparingInt(Car::getMaxVelocity).thenComparingLong(Car::getCarId).compare(car1, car2);
-        }
-    }
-
+    // Все используемые структуры данных - 4 мапы и 2 сета
     private final Map<Long, Car> mapIdToCar = new HashMap<>();
     private final Map<Integer, Owner> mapIdToOwner = new HashMap<>();
     private final Map<Owner, TreeSet<Car>> mapOwnerToCars = new HashMap<>();
     private final Map<String, TreeSet<Car>> mapBrandToCars = new HashMap<>();
-    private final TreeSet<Car> setCarsByPower = new TreeSet<>(new ComparatorByPower());
-    private final TreeSet<Car> setCarsByVelocity = new TreeSet<>(new ComparatorByVelocity());
+    private final Comparator<Car> comparatorByPower = comparingInt(Car::getPower).thenComparingLong(Car::getCarId);
+    private final SortedSet<Car> setCarsByPower = new TreeSet<>(comparatorByPower);
+    private final Comparator<Car> ComparatorByVelocity = comparingInt(Car::getMaxVelocity).thenComparingLong(Car::getCarId);
+    private final TreeSet<Car> setCarsByVelocity = new TreeSet<>(ComparatorByVelocity);
     private final int topNCars = 3;
 
     @Override
     public Collection<Owner> allCarsUniqueOwners() {
-//        return mapIdToOwner.values();
         return mapOwnerToCars.keySet();
     }
 
@@ -50,7 +38,7 @@ public class MyGarage implements Garage {
 
     @Override
     public Collection<Car> carsWithPowerMoreThan(int power) {
-        return setCarsByPower.tailSet(new Car(Long.MAX_VALUE, "", "", 0, power, 0));
+        return setCarsByPower.tailSet(Car.getDummyCarWithPower(power));
     }
 
     @Override
@@ -61,7 +49,7 @@ public class MyGarage implements Garage {
     @Override
     public int meanOwnersAgeOfCarBrand(String brand) {
         Collection<Car> cars = allCarsOfBrand(brand);
-        TreeSet<Integer> ownerIds = new TreeSet<>();
+        List<Integer> ownerIds = new ArrayList<>();
         for (Car car : cars) {
             ownerIds.add(car.getOwnerId());
         }
@@ -69,32 +57,46 @@ public class MyGarage implements Garage {
         for (Integer ownerId : ownerIds) {
             age += mapIdToOwner.get(ownerId).getAge();
         }
-        return (int)Math.round(age / (double) ownerIds.size());
+        return (int) Math.round(age / (double) ownerIds.size());
     }
 
     @Override
     public int meanCarNumberForEachOwner() {
-        return (int)Math.round(mapIdToCar.size() / (double) mapIdToOwner.size());
+        return (int) Math.round(mapIdToCar.size() / (double) mapIdToOwner.size());
+    }
+
+    public boolean carExists(Long carId) { // Проверить существует ли машина с таким Id
+        return mapIdToCar.containsKey(carId);
+    }
+
+    private boolean removeCarFromOwners(Car car) {
+        Owner owner = mapIdToOwner.get(car.getOwnerId());
+        boolean is_removed = mapOwnerToCars.get(owner).remove(car);
+        if (mapOwnerToCars.get(owner).isEmpty()) {// Если удалена последняя машина owner'а, удалить owner'а
+            mapOwnerToCars.remove(owner);
+            mapIdToOwner.remove(car.getOwnerId());
+        }
+        return is_removed;
+    }
+
+    private boolean removeCarFromBrands(Car car) {
+        String brand = car.getBrand();
+        boolean is_removed = mapBrandToCars.get(brand).remove(car);
+        if (mapBrandToCars.get(brand).isEmpty()) { // Удалить "пустой" бренд
+            mapBrandToCars.remove(brand);
+        }
+        return is_removed;
     }
 
     @Override
     public Car removeCar(int _carId) {
         Long carId = new Long(_carId);
-        if (! mapIdToCar.containsKey(carId)) { // Если машина с таким carId не существует
+        if (!carExists(carId)) { // Если машина с таким carId не существует
             throw new RuntimeException("Unable to remove car, no car with ID = " + carId);
         }
         Car car = mapIdToCar.get(carId);
-        Owner owner = mapIdToOwner.get(car.getOwnerId());
-        String brand = car.getBrand();
-        mapOwnerToCars.get(owner).remove(car);
-        if (mapOwnerToCars.get(owner).isEmpty()) {// Если удалена последняя машина owner'а, удалить owner'а
-            mapOwnerToCars.remove(owner);
-            mapIdToOwner.remove(car.getOwnerId());
-        }
-        mapBrandToCars.get(brand).remove(car);
-        if (mapBrandToCars.get(brand).isEmpty()) { // Удалить "пустой" бренд
-            mapBrandToCars.remove(brand);
-        }
+        removeCarFromOwners(car);
+        removeCarFromBrands(car);
         setCarsByPower.remove(car);
         setCarsByVelocity.remove(car);
         mapIdToCar.remove(carId);
@@ -103,23 +105,14 @@ public class MyGarage implements Garage {
 
     @Override
     public void addCar(Car car, Owner owner) {
-        if (mapIdToCar.containsKey(car.getCarId())) {
-            throw new RuntimeException("Unable to add car, car with Id = " + car.getCarId() + " already exists.");
+        final long carId = car.getCarId();
+        if (carExists(carId)) {
+            throw new RuntimeException("Unable to add car, car with Id = " + carId + " already exists.");
         }
-        mapIdToCar.put(car.getCarId(), car);
+        mapIdToCar.put(carId, car);
         mapIdToOwner.put(car.getOwnerId(), owner);
-        if (mapOwnerToCars.get(owner) == null) {
-            mapOwnerToCars.put(owner, new TreeSet<>(Arrays.asList(car)));
-        } else {
-            mapOwnerToCars.get(owner).add(car);
-        }
-        String brand = car.getBrand();
-        if (mapBrandToCars.get(brand) == null) {
-            mapBrandToCars.put(brand, new TreeSet<>(Arrays.asList(car)));
-        } else {
-            mapBrandToCars.get(brand).add(car);
-        }
-
+        mapOwnerToCars.computeIfAbsent(owner, k -> new TreeSet<Car>()).add(car);
+        mapBrandToCars.computeIfAbsent(car.getBrand(), k -> new TreeSet<Car>()).add(car);
         setCarsByPower.add(car);
         setCarsByVelocity.add(car);
 

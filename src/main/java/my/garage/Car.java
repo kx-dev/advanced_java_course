@@ -1,12 +1,14 @@
 package my.garage;
 
+import java.util.Objects;
+
 public class Car  implements Comparable<Car> {
     private final long carId;
     private final String brand;
     private final String modelName;
     private final int maxVelocity;
     private final int power;
-    private final int ownerId; // TODO: исправить на long?
+    private final int ownerId;
 
     public Car(long carId, String brand, String modelName, int maxVelocity, int power, int ownerId) {
         this.carId = carId;
@@ -17,21 +19,27 @@ public class Car  implements Comparable<Car> {
         this.ownerId = ownerId;
     }
 
+    public static Car getDummyCarWithPower(int power) {
+        return new Car(Long.MAX_VALUE, "", "", 0, power, 0);
+    }
+
     @Override
     public int compareTo(Car car) { // по дефолту сравниваем машины по carId, другие варианты сравнения - через отдельный компаратор
-        return (this.carId < car.carId) ? -1 : ((this.carId == car.carId) ? 0 : 1) ;
+        return Long.compare(this.carId, car.carId);
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        return this.carId == ((Car) o).carId;
+        Car car = (Car) o;
+        return carId == car.carId && brand.equals(car.brand) && modelName.equals(car.modelName) &&
+                maxVelocity == car.maxVelocity && power == car.power && ownerId == car.ownerId;
     }
 
     @Override
     public int hashCode() {
-        return (int)carId;
+        return Objects.hash(carId, brand, modelName, maxVelocity, power, ownerId);
     }
 
     public int getOwnerId() {
@@ -69,4 +77,5 @@ public class Car  implements Comparable<Car> {
                 ", ownerId=" + ownerId +
                 '}';
     }
+
 }

@@ -1,5 +1,7 @@
 package my.garage;
 
+import java.util.Objects;
+
 public class Owner {
 
     private final long ownerId;
@@ -28,12 +30,13 @@ public class Owner {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        return this.ownerId == ((Owner) o).ownerId;
+        Owner owner = (Owner) o;
+        return ownerId == owner.ownerId && name.equals(owner.name) && lastName.equals(owner.lastName) && age == owner.age;
     }
 
     @Override
     public int hashCode() {
-        return (int)ownerId;
+        return Objects.hash(ownerId, name, lastName, age);
     }
 
     public long getOwnerId() {
